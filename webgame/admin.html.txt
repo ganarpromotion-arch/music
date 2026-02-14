@@ -1,0 +1,2299 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우리동네 - 관리자</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 { 
+            font-size: 32px; 
+            color: #333; 
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .subtitle { color: #666; font-size: 14px; }
+        
+        /* 탭 */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .tab {
+            padding: 15px 25px;
+            background: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.3s;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .tab:hover { transform: translateY(-2px); }
+        
+        .tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        /* 패널 */
+        .panel {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .panel.active { display: block; animation: fadeIn 0.3s; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 버튼 */
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover { transform: translateY(-2px); }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        /* 카드 */
+        .card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        /* 테이블 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        /* 입력 */
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        /* 모달 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .modal.show { display: flex; }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 30px;
+            z-index: 10000;
+            display: none;
+        }
+        
+        .toast.show { display: block; }
+        
+        /* 그리드 */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        /* 아이템 */
+        .item {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px solid #ddd;
+            transition: all 0.3s;
+        }
+        
+        .item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .item-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .item-emoji {
+            font-size: 36px;
+        }
+        
+        .item-info {
+            flex: 1;
+        }
+        
+        .item-name {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 3px;
+        }
+        
+        .item-desc {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .item-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        /* 설정 그리드 */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .setting-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+        }
+        
+        .setting-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .setting-desc {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        /* 파일 업로드 영역 */
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            background: #e9ecef;
+            border-color: #5568d3;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        /* 재료 카테고리 */
+        .category-section {
+            margin-bottom: 30px;
+        }
+        
+        .category-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 8px;
+        }
+    
+        /* 관리자 잠금 */
+        .admin-lock {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+        .admin-lock .box {
+            width: 100%;
+            max-width: 420px;
+            background: white;
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+        }
+        .admin-lock h2 { font-size: 20px; margin-bottom: 8px; color:#222; }
+        .admin-lock p { font-size: 13px; color:#666; margin-bottom: 16px; line-height:1.4; }
+        .admin-lock input {
+            width: 100%;
+            padding: 14px 14px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 16px;
+            outline: none;
+        }
+        .admin-lock .row { display:flex; gap:10px; margin-top:12px; }
+        .admin-lock .btn {
+            flex:1;
+            border:none;
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-weight: 700;
+            cursor:pointer;
+        }
+        .admin-lock .btn.primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        .admin-lock .btn.ghost {
+            background: #f3f4f6;
+            color:#333;
+        }
+        .admin-lock .error { margin-top:10px; color:#dc3545; font-size:13px; display:none; }
+    </style>
+</head>
+<body>
+    <!-- 관리자 잠금 -->
+    <div id="adminLock" class="admin-lock">
+        <div class="box">
+            <h2>🔒 관리자 페이지</h2>
+            <p>비밀번호를 입력해야 관리자 화면에 접근할 수 있습니다.<br>※ 이 방식은 데모용입니다. 배포 시 비밀번호는 꼭 변경하세요.</p>
+            <input id="adminPasswordInput" type="password" placeholder="비밀번호 입력" autocomplete="current-password" />
+            <div class="row">
+                <button class="btn ghost" onclick="location.href='index.html'">게임으로</button>
+                <button class="btn primary" onclick="unlockAdmin()">입장</button>
+            </div>
+            <div id="adminLockError" class="error">비밀번호가 틀립니다.</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 헤더 -->
+        <div class="header">
+            <h1>
+                <span>🏘️</span>
+                <span>우리동네 관리자</span>
+            </h1>
+            <p class="subtitle">게임 데이터를 관리하고 설정을 변경할 수 있습니다</p>
+        </div>
+
+        <!-- 탭 -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(0)">📊 대시보드</button>
+            <button class="tab" onclick="switchTab(1)">👥 유저 관리</button>
+            <button class="tab" onclick="switchTab(2)">⚙️ 게임 설정</button>
+            <button class="tab" onclick="switchTab(3)">🏪 식당 관리</button>
+            <button class="tab" onclick="switchTab(4)">🧪 재료 관리</button>
+            <button class="tab" onclick="switchTab(5)">📋 레시피 관리</button>
+            <button class="tab" onclick="switchTab(6)">💰 문제 관리</button>
+        </div>
+
+        <!-- 대시보드 패널 -->
+        <div id="panel0" class="panel active">
+            <div class="card-header">
+                <div class="card-title">📊 데이터 현황</div>
+                <button class="btn btn-danger" onclick="if(confirm('모든 게임 데이터를 초기화합니다. 계속?')){localStorage.clear();location.reload();}">🗑️ 전체 초기화</button>
+            </div>
+            <div id="dashboardArea" style="margin-top:20px;"></div>
+        </div>
+
+        <!-- 유저 관리 패널 -->
+        <div id="panel1" class="panel">
+            <div class="card-header">
+                <div class="card-title">📊 전체 유저 목록</div>
+                <button class="btn" onclick="loadUsers()">🔄 새로고침</button>
+            </div>
+            <div id="usersList"></div>
+        </div>
+
+        <!-- 게임 설정 패널 -->
+        <div id="panel2" class="panel">
+            <div class="card-header">
+                <div class="card-title">⚙️ 게임 설정</div>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-secondary" onclick="resetSettings()">기본값으로 초기화</button>
+                    <button class="btn" onclick="saveSettings()">💾 저장</button>
+                </div>
+            </div>
+            
+            <div class="settings-grid" id="settingsGrid"></div>
+            <div style="margin-top:18px;background:#fff;border-radius:16px;padding:18px;box-shadow:0 8px 24px rgba(0,0,0,0.08);">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                    <div style="font-size:18px;font-weight:800;color:#333;">🎵 배경음악 모듈</div>
+                    <label style="display:flex;align-items:center;gap:8px;font-weight:700;color:#333;">
+                        <input type="checkbox" id="bgm_enabled" />
+                        사용
+                    </label>
+                </div>
+
+                <div style="display:grid;grid-template-columns: 140px 1fr;gap:12px;margin-top:12px;align-items:center;">
+                    <div style="font-weight:700;color:#444;">소스 방식</div>
+                    <select id="bgm_sourceType" style="padding:10px;border:1px solid #ddd;border-radius:12px;">
+                        <option value="url">URL</option>
+                        <option value="data">파일 업로드(이 기기)</option>
+                    </select>
+
+                    <div style="font-weight:700;color:#444;">BGM URL</div>
+                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                        <input type="text" id="bgm_url" placeholder="예: https://.../bgm.mp3" style="padding:10px;border:1px solid #ddd;border-radius:12px;min-width:280px;flex:1;" />
+                        <button class="btn" onclick="bgmAddUrl()">➕ URL을 라이브러리에 추가</button>
+                    </div>
+
+                    <div style="font-weight:700;color:#444;">파일 추가</div>
+                    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                        <input type="file" id="bgm_file" accept="audio/*" />
+                        <button class="btn" onclick="bgmAddFile()">➕ 파일을 라이브러리에 추가</button>
+                        <span style="font-size:12px;color:#666;">※ 업로드 파일은 이 기기(localStorage)에 저장됩니다. 큰 파일(수 MB 이상)은 저장 실패할 수 있어요.</span>
+                    </div>
+
+                    <div style="font-weight:700;color:#444;">볼륨</div>
+                    <input type="range" id="bgm_volume" min="0" max="1" step="0.01" />
+
+                    <div style="font-weight:700;color:#444;">미리듣기</div>
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        <button class="btn btn-secondary" onclick="bgmPreview()">▶️ 재생</button>
+                        <button class="btn btn-secondary" onclick="bgmStopPreview()">⏹ 정지</button>
+                    </div>
+
+                    <div style="font-weight:700;color:#444;">라이브러리</div>
+                    <div id="bgm_library" style="display:flex;flex-direction:column;gap:8px;"></div>
+                </div>
+
+                <audio id="bgm_preview_player" controls style="width:100%;margin-top:12px;display:none;"></audio>
+
+                <!-- 숨김 필드(업로드 파일 선택 시 사용) -->
+                <input type="hidden" id="bgm_dataKey" value="" />
+            </div>
+
+        </div>
+
+        <!-- 식당 관리 패널 -->
+        <div id="panel3" class="panel">
+            <div class="card-header">
+                <div class="card-title">🏪 식당 종류 관리</div>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-success" onclick="openAddShopTypeModal()">+ 새 식당 추가</button>
+                    <button class="btn" onclick="openUploadModal('shops')">📤 파일 업로드</button>
+                </div>
+            </div>
+            <div class="grid" id="shopTypesList"></div>
+        </div>
+
+        <!-- 재료 관리 패널 -->
+        <div id="panel4" class="panel">
+            <div class="card-header">
+                <div class="card-title">🧪 재료 관리</div>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-success" onclick="openAddIngredientModal()">+ 새 재료 추가</button>
+                    <button class="btn" onclick="openUploadModal('ingredients')">📤 파일 업로드</button>
+                </div>
+            </div>
+            <div id="ingredientsList"></div>
+        </div>
+
+        <!-- 레시피 관리 패널 -->
+        <div id="panel5" class="panel">
+            <div class="card-header">
+                <div class="card-title">📋 레시피 관리</div>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-success" onclick="openAddRecipeModal()">+ 새 레시피 추가</button>
+                    <button class="btn" onclick="openUploadModal('recipes')">📤 파일 업로드</button>
+                </div>
+            </div>
+            <div id="recipesList"></div>
+        </div>
+
+        <!-- 문제 관리 패널 -->
+        <div id="panel6" class="panel">
+            <div class="card-header">
+                <div class="card-title">💰 문제 관리</div>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-success" onclick="openAddQuestionModal()">+ 새 문제 추가</button>
+                    <button class="btn" onclick="openUploadModal('questions')">📤 파일 업로드</button>
+                </div>
+            </div>
+            <div id="questionsList"></div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <!-- 모달들 -->
+    <div id="modal" class="modal"></div>
+
+    <!-- JavaScript -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="device-auth-firebase.js"></script>
+    <script src="shop-data-30.js"></script>
+    <script src="data-manager.js"></script>
+    <script src="game-settings.js"></script>
+    <script>
+        // ==================== 전역 변수 ====================
+        let currentEditItem = null;
+        let currentUploadType = null;
+
+        // ==================== 초기화 ====================
+        window.addEventListener('DOMContentLoaded', function() {
+            // Firebase 데이터 로드 대기
+            if (DeviceAuth.onReady) {
+                DeviceAuth.onReady(initAdmin);
+                setTimeout(initAdmin, 5000); // 타임아웃
+            } else {
+                initAdmin();
+            }
+        });
+        
+        let _adminInited = false;
+        function initAdmin() {
+            if (_adminInited) return;
+            _adminInited = true;
+            loadDashboard();
+            loadUsers();
+            loadSettings();
+            loadShopTypes();
+            loadIngredients();
+            loadRecipes();
+            loadQuestions();
+        }
+
+        // ==================== Toast ====================
+        function toast(msg) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 3000);
+        }
+
+        // ==================== 탭 전환 ====================
+        function switchTab(idx) {
+            document.querySelectorAll('.tab').forEach((tab, i) => {
+                tab.classList.toggle('active', i === idx);
+            });
+            document.querySelectorAll('.panel').forEach((panel, i) => {
+                panel.classList.toggle('active', i === idx);
+            });
+            if (idx === 2) { try { renderSettings(); renderBgmModule(); } catch(e) {} }
+        }
+
+        // ==================== 모달 ====================
+        function showModal(html) {
+            document.getElementById('modal').innerHTML = `
+                <div class="modal-content">
+                    ${html}
+                </div>
+            `;
+            document.getElementById('modal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('show');
+        }
+
+        // ==================== 대시보드 ====================
+        function loadDashboard() {
+            const users = DeviceAuth.getAllUsers();
+            const shopTypes = DataManager.getShopTypes();
+            const ingredients = DataManager.getIngredients();
+            const recipes = DataManager.getRecipes();
+            const questions = DataManager.getQuestions();
+            
+            const allUsers = Object.values(users);
+            const realUsers = allUsers.filter(u => !u.isAI);
+            const aiUsers = allUsers.filter(u => u.isAI);
+            const totalGold = allUsers.reduce((s, u) => s + (u.gold || 0), 0);
+            const totalProducts = allUsers.reduce((s, u) => s + (u.products || []).length, 0);
+            const totalSales = allUsers.reduce((s, u) => s + (u.salesHistory || []).length, 0);
+            
+            // 업종별 레시피 수
+            let shopRecipeHtml = '';
+            shopTypes.forEach(shop => {
+                const count = recipes.filter(r => r.shopType === shop.id).length;
+                shopRecipeHtml += `
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8f9fa;border-radius:8px;margin-bottom:4px;">
+                        <span>${shop.emoji} ${shop.name}</span>
+                        <span style="font-weight:700;color:#667eea;">${count}개</span>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('dashboardArea').innerHTML = `
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;margin-bottom:30px;">
+                    <div style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:25px;border-radius:16px;text-align:center;">
+                        <div style="font-size:36px;font-weight:700;">${shopTypes.length}</div>
+                        <div style="font-size:14px;opacity:0.9;margin-top:5px;">🏪 업종</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#28a745,#20c997);color:white;padding:25px;border-radius:16px;text-align:center;">
+                        <div style="font-size:36px;font-weight:700;">${recipes.length}</div>
+                        <div style="font-size:14px;opacity:0.9;margin-top:5px;">📋 레시피</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#ffc107,#ff8c00);color:white;padding:25px;border-radius:16px;text-align:center;">
+                        <div style="font-size:36px;font-weight:700;">${ingredients.length}</div>
+                        <div style="font-size:14px;opacity:0.9;margin-top:5px;">🧪 재료</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#dc3545,#e83e8c);color:white;padding:25px;border-radius:16px;text-align:center;">
+                        <div style="font-size:36px;font-weight:700;">${questions.length}</div>
+                        <div style="font-size:14px;opacity:0.9;margin-top:5px;">💰 문제</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#17a2b8,#6610f2);color:white;padding:25px;border-radius:16px;text-align:center;">
+                        <div style="font-size:36px;font-weight:700;">${realUsers.length}</div>
+                        <div style="font-size:14px;opacity:0.9;margin-top:5px;">👤 실제 유저</div>
+                    </div>
+                    <div style="background:linear-gradient(135deg,#6c757d,#495057);color:white;padding:25px;border-radius:16px;text-align:center;">
+                        <div style="font-size:36px;font-weight:700;">${aiUsers.length}</div>
+                        <div style="font-size:14px;opacity:0.9;margin-top:5px;">🤖 AI 유저</div>
+                    </div>
+                </div>
+                
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;">
+                    <div>
+                        <h3 style="margin-bottom:15px;">🏪 업종별 레시피 현황</h3>
+                        <div style="max-height:500px;overflow-y:auto;">${shopRecipeHtml}</div>
+                    </div>
+                    <div>
+                        <h3 style="margin-bottom:15px;">💰 경제 현황</h3>
+                        <div style="display:grid;gap:8px;">
+                            <div style="padding:12px;background:#f8f9fa;border-radius:8px;display:flex;justify-content:space-between;">
+                                <span>전체 보유 골드</span><span style="font-weight:700;">${totalGold.toLocaleString()}G</span>
+                            </div>
+                            <div style="padding:12px;background:#f8f9fa;border-radius:8px;display:flex;justify-content:space-between;">
+                                <span>등록된 상품</span><span style="font-weight:700;">${totalProducts}개</span>
+                            </div>
+                            <div style="padding:12px;background:#f8f9fa;border-radius:8px;display:flex;justify-content:space-between;">
+                                <span>총 거래 횟수</span><span style="font-weight:700;">${totalSales}건</span>
+                            </div>
+                        </div>
+                        
+                        <h3 style="margin:20px 0 15px;">🔧 빠른 작업</h3>
+                        <div style="display:grid;gap:8px;">
+                            <button class="btn" onclick="DataManager.resetToDefault();location.reload();" style="text-align:left;">🔄 게임 데이터 리셋 (식당/재료/레시피 초기화)</button>
+                            <button class="btn btn-secondary" onclick="exportAllData()" style="text-align:left;">📤 전체 데이터 내보내기 (JSON)</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function exportAllData() {
+            const json = DataManager.exportData();
+            const blob = new Blob([json], {type: 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'game-data-export.json';
+            a.click();
+            toast('데이터 내보내기 완료');
+        }
+
+        // ==================== 유저 관리 ====================
+        function loadUsers() {
+            const users = DeviceAuth.getAllUsers();
+            const userList = Object.values(users).filter(u => !u.isAI);
+            
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>아이디</th>
+                            <th>골드</th>
+                            <th>나이</th>
+                            <th>상점</th>
+                            <th>판매 상품</th>
+                            <th>판매 횟수</th>
+                            <th>가입일</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            userList.forEach(user => {
+                const shopType = user.shop ? DataManager.getShopType(user.shop.type) : null;
+                const salesCount = (user.salesHistory || []).length;
+                
+                html += `
+                    <tr>
+                        <td><strong>${user.username}</strong></td>
+                        <td>${user.gold}G</td>
+                        <td>${user.age || '-'}세</td>
+                        <td>${shopType ? shopType.emoji + ' ' + shopType.name : '-'}</td>
+                        <td>${(user.products || []).length}개</td>
+                        <td>${salesCount}회</td>
+                        <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn btn-small" onclick="viewUserDetail('${user.username}')">상세</button>
+                            <button class="btn btn-small btn-danger" onclick="deleteUser('${user.username}')">삭제</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += `</tbody></table>`;
+            
+            if (userList.length === 0) {
+                html = '<p style="text-align:center;padding:40px;color:#999;">등록된 유저가 없습니다.</p>';
+            }
+            
+            document.getElementById('usersList').innerHTML = html;
+        }
+
+        function viewUserDetail(username) {
+            const users = DeviceAuth.getAllUsers();
+            const user = users[username];
+            
+            if (!user) {
+                toast('유저를 찾을 수 없습니다');
+                return;
+            }
+            
+            const shopType = user.shop ? DataManager.getShopType(user.shop.type) : null;
+            const salesHistory = user.salesHistory || [];
+            const totalRevenue = salesHistory.reduce((sum, sale) => sum + sale.price, 0);
+            
+            let html = `
+                <div class="modal-title">👤 ${username} 정보</div>
+                
+                <div class="card">
+                    <h3 style="margin-bottom:15px;">💰 기본 정보</h3>
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:15px;">
+                        <div>
+                            <label>골드</label>
+                            <input type="number" id="editGold" value="${user.gold}">
+                        </div>
+                        <div>
+                            <label>나이</label>
+                            <input type="number" id="editAge" value="${user.age || 0}">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3 style="margin-bottom:15px;">🏪 상점 정보</h3>
+                    <p>${shopType ? shopType.emoji + ' ' + shopType.name : '상점 없음'}</p>
+                    ${user.shops && user.shops.length > 1 ? `<p style="font-size:13px;color:#666;margin-top:5px;">총 ${user.shops.length}개 상점 운영</p>` : ''}
+                </div>
+                
+                <div class="card">
+                    <h3 style="margin-bottom:15px;">📊 통계</h3>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+                        <div style="text-align:center;background:white;padding:15px;border-radius:8px;">
+                            <div style="font-size:24px;font-weight:700;color:#667eea;">${user.stats?.made || 0}</div>
+                            <div style="font-size:12px;color:#666;">제작</div>
+                        </div>
+                        <div style="text-align:center;background:white;padding:15px;border-radius:8px;">
+                            <div style="font-size:24px;font-weight:700;color:#28a745;">${salesHistory.length}</div>
+                            <div style="font-size:12px;color:#666;">판매</div>
+                        </div>
+                        <div style="text-align:center;background:white;padding:15px;border-radius:8px;">
+                            <div style="font-size:24px;font-weight:700;color:#ffc107;">${totalRevenue.toLocaleString()}</div>
+                            <div style="font-size:12px;color:#666;">수익</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3 style="margin-bottom:15px;">📦 보유 재고</h3>
+                    ${Object.keys(user.inventory || {}).length > 0 ? 
+                        Object.entries(user.inventory).map(([id, count]) => {
+                            const ing = DataManager.getIngredient(id);
+                            return ing ? `<div>${ing.emoji} ${ing.name}: ${count}개</div>` : '';
+                        }).join('') 
+                        : '<p style="color:#999;">재고 없음</p>'
+                    }
+                </div>
+                
+                <div class="card">
+                    <h3 style="margin-bottom:15px;">🛒 판매 중인 상품</h3>
+                    ${(user.products || []).length > 0 ?
+                        user.products.map(p => `<div>${p.emoji} ${p.name} - ${p.price}G</div>`).join('')
+                        : '<p style="color:#999;">판매 상품 없음</p>'
+                    }
+                </div>
+                
+                <div style="display:flex;gap:10px;margin-top:20px;">
+                    <button class="btn" onclick="saveUserEdit('${username}')">💾 저장</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">취소</button>
+                </div>
+            `;
+            
+            showModal(html);
+        }
+
+        function saveUserEdit(username) {
+            const users = DeviceAuth.getAllUsers();
+            const user = users[username];
+            
+            user.gold = parseInt(document.getElementById('editGold').value);
+            user.age = parseInt(document.getElementById('editAge').value);
+            
+            DeviceAuth.saveAllUsers(users);
+            closeModal();
+            toast('저장 완료!');
+            loadUsers();
+        }
+
+        function deleteUser(username) {
+            if (!confirm(`정말 "${username}" 유저를 삭제하시겠습니까?`)) return;
+            
+            const users = DeviceAuth.getAllUsers();
+            delete users[username];
+            DeviceAuth.saveAllUsers(users);
+            
+            toast('삭제 완료');
+            loadUsers();
+        }
+
+        // ==================== 게임 설정 ====================
+        function loadSettings() {
+            const settings = GameSettings.get();
+            
+            const html = `
+                <div class="setting-item">
+                    <div class="setting-label">💰 초기 골드</div>
+                    <div class="setting-desc">신규 유저가 시작할 때 받는 골드</div>
+                    <input type="number" id="setting_initialGold" value="${settings.initialGold}" min="0">
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">🏪 첫 매장 비용</div>
+                    <div class="setting-desc">첫 번째 매장을 오픈할 때 드는 골드</div>
+                    <input type="number" id="setting_firstShopCost" value="${settings.firstShopCost}" min="0">
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">🏬 추가 매장 비용</div>
+                    <div class="setting-desc">두 번째 이후 매장을 추가할 때 드는 골드</div>
+                    <input type="number" id="setting_additionalShopCost" value="${settings.additionalShopCost}" min="0">
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">⏱️ AI 배고픔 증가 시간 (초)</div>
+                    <div class="setting-desc">AI의 배고픔이 증가하는 간격 (밀리초를 초로 표시)</div>
+                    <input type="number" id="setting_aiHungerInterval" value="${settings.aiHungerInterval / 1000}" min="1">
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">📈 AI 배고픔 증가량 (%)</div>
+                    <div class="setting-desc">매 간격마다 증가하는 배고픔 퍼센트</div>
+                    <input type="number" id="setting_aiHungerIncrement" value="${settings.aiHungerIncrement}" min="0.1" step="0.1">
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">🛒 AI 구매 시도 간격 (초)</div>
+                    <div class="setting-desc">AI가 구매를 시도하는 간격</div>
+                    <input type="number" id="setting_aiPurchaseInterval" value="${settings.aiPurchaseInterval / 1000}" min="1">
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">🎲 AI 구매 확률 (%)</div>
+                    <div class="setting-desc">AI가 구매를 시도할 때 실제로 구매할 확률 (0-100)</div>
+                    <input type="number" id="setting_aiPurchaseChance" value="${settings.aiPurchaseChance * 100}" min="0" max="100">
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">💵 레시피 가격 비율</div>
+                    <div class="setting-desc">제작비 × N배 = 적정 판매가</div>
+                    <input type="number" id="setting_recipePriceMultiplier" value="${settings.recipePriceMultiplier}" min="1" step="0.5">
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">🟢 쉬운 문제 보상 (G)</div>
+                    <div class="setting-desc">쉬운 문제를 맞췄을 때 받는 골드</div>
+                    <input type="number" id="setting_easyQuestionReward" value="${settings.easyQuestionReward}" min="1">
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">🟡 중간 문제 보상 (G)</div>
+                    <div class="setting-desc">중간 문제를 맞췄을 때 받는 골드</div>
+                    <input type="number" id="setting_mediumQuestionReward" value="${settings.mediumQuestionReward}" min="1">
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">🔴 어려운 문제 보상 (G)</div>
+                    <div class="setting-desc">어려운 문제를 맞췄을 때 받는 골드</div>
+                    <input type="number" id="setting_hardQuestionReward" value="${settings.hardQuestionReward}" min="1">
+                </div>
+                
+                <div class="setting-item">
+                    <div class="setting-label">💬 상품당 최대 댓글 수</div>
+                    <div class="setting-desc">하나의 상품에 달릴 수 있는 최대 댓글 개수</div>
+                    <input type="number" id="setting_maxCommentsPerProduct" value="${settings.maxCommentsPerProduct}" min="1">
+                </div>
+            `;
+            
+            document.getElementById('settingsGrid').innerHTML = html;
+        }
+
+        function saveSettings() {
+            const settings = {
+                initialGold: parseInt(document.getElementById('setting_initialGold').value),
+                firstShopCost: parseInt(document.getElementById('setting_firstShopCost').value),
+                additionalShopCost: parseInt(document.getElementById('setting_additionalShopCost').value),
+                aiHungerInterval: parseInt(document.getElementById('setting_aiHungerInterval').value) * 1000,
+                aiHungerIncrement: parseFloat(document.getElementById('setting_aiHungerIncrement').value),
+                aiPurchaseInterval: parseInt(document.getElementById('setting_aiPurchaseInterval').value) * 1000,
+                aiPurchaseChance: parseFloat(document.getElementById('setting_aiPurchaseChance').value) / 100,
+                recipePriceMultiplier: parseFloat(document.getElementById('setting_recipePriceMultiplier').value),
+                easyQuestionReward: parseInt(document.getElementById('setting_easyQuestionReward').value),
+                mediumQuestionReward: parseInt(document.getElementById('setting_mediumQuestionReward').value),
+                hardQuestionReward: parseInt(document.getElementById('setting_hardQuestionReward').value),
+                maxCommentsPerProduct: parseInt(document.getElementById('setting_maxCommentsPerProduct').value),
+                // BGM
+                bgmEnabled: document.getElementById('bgm_enabled').checked,
+                bgmSourceType: document.getElementById('bgm_sourceType').value === 'data' ? 'data' : 'url',
+                bgmUrl: document.getElementById('bgm_url').value.trim(),
+                bgmDataKey: document.getElementById('bgm_dataKey').value.trim(),
+                bgmVolume: parseFloat(document.getElementById('bgm_volume').value || '0.35')
+            };
+            
+            GameSettings.save(settings);
+            toast('설정 저장 완료!');
+        }
+
+        function resetSettings() {
+            if (!confirm('모든 설정을 기본값으로 초기화하시겠습니까?')) return;
+            
+            GameSettings.resetToDefault();
+            loadSettings();
+            toast('기본값으로 초기화 완료!');
+        }
+
+        // ==================== 식당 관리 ====================
+        function loadShopTypes() {
+            const shopTypes = DataManager.getShopTypes();
+            
+            let html = '';
+            shopTypes.forEach(shop => {
+                const recipes = DataManager.getRecipes(shop.id);
+                
+                html += `
+                    <div class="item">
+                        <div class="item-header">
+                            <div class="item-emoji">${shop.emoji}</div>
+                            <div class="item-info">
+                                <div class="item-name">${shop.name}</div>
+                                <div class="item-desc">추가 비용: ${shop.addCost}G | 레시피: ${recipes.length}개</div>
+                            </div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn btn-small" onclick="editShopType('${shop.id}')">수정</button>
+                            <button class="btn btn-small btn-danger" onclick="deleteShopType('${shop.id}')">삭제</button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('shopTypesList').innerHTML = html || '<p style="text-align:center;padding:40px;color:#999;">등록된 식당이 없습니다.</p>';
+        }
+
+        function openAddShopTypeModal() {
+            const html = `
+                <div class="modal-title">🏪 새 식당 추가</div>
+                
+                <label>식당 이름</label>
+                <input type="text" id="shopName" placeholder="예: 타코 전문점">
+                
+                <label>이모지</label>
+                <input type="text" id="shopEmoji" placeholder="🌮" maxlength="2">
+                
+                <label>추가 비용 (G)</label>
+                <input type="number" id="shopCost" value="500" min="0">
+                
+                <div style="background:#f8f9fa;padding:15px;border-radius:8px;margin-bottom:15px;">
+                    <div style="font-size:13px;font-weight:600;margin-bottom:5px;">미리보기</div>
+                    <div style="font-size:24px;" id="shopPreview">-</div>
+                </div>
+                
+                <div style="display:flex;gap:10px;">
+                    <button class="btn" onclick="saveNewShopType()">저장</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">취소</button>
+                </div>
+            `;
+            
+            showModal(html);
+            
+            ['shopName', 'shopEmoji', 'shopCost'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updateShopPreview);
+            });
+        }
+
+        function updateShopPreview() {
+            const name = document.getElementById('shopName').value || '-';
+            const emoji = document.getElementById('shopEmoji').value || '🏪';
+            const cost = document.getElementById('shopCost').value || '0';
+            
+            document.getElementById('shopPreview').textContent = `${emoji} ${name} (${cost}G)`;
+        }
+
+        function saveNewShopType() {
+            const name = document.getElementById('shopName').value.trim();
+            const emoji = document.getElementById('shopEmoji').value.trim();
+            const cost = parseInt(document.getElementById('shopCost').value);
+            
+            if (!name) {
+                toast('식당 이름을 입력하세요');
+                return;
+            }
+            
+            if (!emoji) {
+                toast('이모지를 입력하세요');
+                return;
+            }
+            
+            DataManager.addShopType({ name, emoji, addCost: cost });
+            closeModal();
+            toast('식당 추가 완료!');
+            loadShopTypes();
+        }
+
+        function editShopType(id) {
+            const shop = DataManager.getShopType(id);
+            
+            const html = `
+                <div class="modal-title">🏪 식당 수정</div>
+                
+                <label>식당 이름</label>
+                <input type="text" id="editShopName" value="${shop.name}">
+                
+                <label>이모지</label>
+                <input type="text" id="editShopEmoji" value="${shop.emoji}" maxlength="2">
+                
+                <label>추가 비용 (G)</label>
+                <input type="number" id="editShopCost" value="${shop.addCost}" min="0">
+                
+                <div style="display:flex;gap:10px;margin-top:20px;">
+                    <button class="btn" onclick="updateShopType('${id}')">💾 저장</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">취소</button>
+                </div>
+            `;
+            
+            showModal(html);
+        }
+
+        function updateShopType(id) {
+            const updates = {
+                name: document.getElementById('editShopName').value.trim(),
+                emoji: document.getElementById('editShopEmoji').value.trim(),
+                addCost: parseInt(document.getElementById('editShopCost').value)
+            };
+            
+            DataManager.updateShopType(id, updates);
+            closeModal();
+            toast('수정 완료!');
+            loadShopTypes();
+        }
+
+        function deleteShopType(id) {
+            const recipes = DataManager.getRecipes(id);
+            
+            if (recipes.length > 0) {
+                if (!confirm(`이 식당의 레시피 ${recipes.length}개가 함께 삭제됩니다. 계속하시겠습니까?`)) return;
+            }
+            
+            DataManager.deleteShopType(id);
+            toast('삭제 완료');
+            loadShopTypes();
+            loadRecipes();
+        }
+
+        // ==================== 재료 관리 ====================
+        function loadIngredients() {
+            const ingredients = DataManager.getIngredients();
+            
+            // 카테고리별로 그룹화
+            const categories = {
+                fruit: { name: '🍎 과일', items: [] },
+                dairy: { name: '🥛 유제품', items: [] },
+                grain: { name: '🌾 곡물/면/빵', items: [] },
+                sweet: { name: '🍬 단맛/디저트', items: [] },
+                protein: { name: '🍖 단백질/고기', items: [] },
+                seafood: { name: '🦐 해산물', items: [] },
+                vegetable: { name: '🥬 야채', items: [] },
+                sauce: { name: '🥫 소스/양념', items: [] },
+                other: { name: '📦 기타', items: [] }
+            };
+            
+            ingredients.forEach(ing => {
+                const cat = ing.category || 'other';
+                if (categories[cat]) {
+                    categories[cat].items.push(ing);
+                } else {
+                    categories.other.items.push(ing);
+                }
+            });
+            
+            let html = '';
+            Object.values(categories).forEach(cat => {
+                if (cat.items.length > 0) {
+                    html += `
+                        <div class="category-section">
+                            <div class="category-title">${cat.name} (${cat.items.length}개)</div>
+                            <div class="grid">
+                    `;
+                    
+                    cat.items.forEach(ing => {
+                        html += `
+                            <div class="item">
+                                <div class="item-header">
+                                    <div class="item-emoji">${ing.emoji}</div>
+                                    <div class="item-info">
+                                        <div class="item-name">${ing.name}</div>
+                                        <div class="item-desc">${ing.price}G</div>
+                                    </div>
+                                </div>
+                                <div class="item-actions">
+                                    <button class="btn btn-small" onclick="editIngredient('${ing.id}')">수정</button>
+                                    <button class="btn btn-small btn-danger" onclick="deleteIngredient('${ing.id}')">삭제</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            document.getElementById('ingredientsList').innerHTML = html || '<p style="text-align:center;padding:40px;color:#999;">등록된 재료가 없습니다.</p>';
+        }
+
+        function openAddIngredientModal() {
+            const html = `
+                <div class="modal-title">🧪 새 재료 추가</div>
+                
+                <label>재료 이름</label>
+                <input type="text" id="ingName" placeholder="예: 마요네즈">
+                
+                <label>이모지</label>
+                <input type="text" id="ingEmoji" placeholder="🥫" maxlength="2">
+                
+                <label>가격 (G)</label>
+                <input type="number" id="ingPrice" value="3" min="1">
+                
+                <label>카테고리</label>
+                <select id="ingCategory">
+                    <option value="fruit">🍎 과일</option>
+                    <option value="dairy">🥛 유제품</option>
+                    <option value="grain">🌾 곡물</option>
+                    <option value="sweet">🍬 단맛</option>
+                    <option value="protein">🍖 단백질</option>
+                    <option value="vegetable">🥬 야채</option>
+                    <option value="sauce">🥫 소스</option>
+                    <option value="other">📦 기타</option>
+                </select>
+                
+                <div style="background:#f8f9fa;padding:15px;border-radius:8px;margin-bottom:15px;">
+                    <div style="font-size:13px;font-weight:600;margin-bottom:5px;">미리보기</div>
+                    <div style="font-size:24px;" id="ingPreview">-</div>
+                </div>
+                
+                <div style="display:flex;gap:10px;">
+                    <button class="btn" onclick="saveNewIngredient()">저장</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">취소</button>
+                </div>
+            `;
+            
+            showModal(html);
+            
+            ['ingName', 'ingEmoji', 'ingPrice'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updateIngPreview);
+            });
+        }
+
+        function updateIngPreview() {
+            const name = document.getElementById('ingName').value || '-';
+            const emoji = document.getElementById('ingEmoji').value || '🧪';
+            const price = document.getElementById('ingPrice').value || '0';
+            
+            document.getElementById('ingPreview').textContent = `${emoji} ${name} - ${price}G`;
+        }
+
+        function saveNewIngredient() {
+            const name = document.getElementById('ingName').value.trim();
+            const emoji = document.getElementById('ingEmoji').value.trim();
+            const price = parseInt(document.getElementById('ingPrice').value);
+            const category = document.getElementById('ingCategory').value;
+            
+            if (!name) {
+                toast('재료 이름을 입력하세요');
+                return;
+            }
+            
+            if (!emoji) {
+                toast('이모지를 입력하세요');
+                return;
+            }
+            
+            DataManager.addIngredient({ name, emoji, price, category });
+            closeModal();
+            toast('재료 추가 완료!');
+            loadIngredients();
+        }
+
+        function editIngredient(id) {
+            const ing = DataManager.getIngredient(id);
+            
+            const html = `
+                <div class="modal-title">🧪 재료 수정</div>
+                
+                <label>재료 이름</label>
+                <input type="text" id="editIngName" value="${ing.name}">
+                
+                <label>이모지</label>
+                <input type="text" id="editIngEmoji" value="${ing.emoji}" maxlength="2">
+                
+                <label>가격 (G)</label>
+                <input type="number" id="editIngPrice" value="${ing.price}" min="1">
+                
+                <label>카테고리</label>
+                <select id="editIngCategory">
+                    <option value="fruit" ${ing.category==='fruit'?'selected':''}>🍎 과일</option>
+                    <option value="dairy" ${ing.category==='dairy'?'selected':''}>🥛 유제품</option>
+                    <option value="grain" ${ing.category==='grain'?'selected':''}>🌾 곡물</option>
+                    <option value="sweet" ${ing.category==='sweet'?'selected':''}>🍬 단맛</option>
+                    <option value="protein" ${ing.category==='protein'?'selected':''}>🍖 단백질</option>
+                    <option value="vegetable" ${ing.category==='vegetable'?'selected':''}>🥬 야채</option>
+                    <option value="sauce" ${ing.category==='sauce'?'selected':''}>🥫 소스</option>
+                    <option value="other" ${ing.category==='other'?'selected':''}>📦 기타</option>
+                </select>
+                
+                <div style="display:flex;gap:10px;margin-top:20px;">
+                    <button class="btn" onclick="updateIngredient('${id}')">💾 저장</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">취소</button>
+                </div>
+            `;
+            
+            showModal(html);
+        }
+
+        function updateIngredient(id) {
+            const updates = {
+                name: document.getElementById('editIngName').value.trim(),
+                emoji: document.getElementById('editIngEmoji').value.trim(),
+                price: parseInt(document.getElementById('editIngPrice').value),
+                category: document.getElementById('editIngCategory').value
+            };
+            
+            DataManager.updateIngredient(id, updates);
+            closeModal();
+            toast('수정 완료!');
+            loadIngredients();
+        }
+
+        function deleteIngredient(id) {
+            const ing = DataManager.getIngredient(id);
+            
+            // 이 재료를 사용하는 레시피 확인
+            const allRecipes = DataManager.getRecipes();
+            const usedIn = allRecipes.filter(r => 
+                r.ingredients.some(i => i.ingredientId === id)
+            );
+            
+            if (usedIn.length > 0) {
+                if (!confirm(`이 재료를 사용하는 레시피 ${usedIn.length}개에서 제거됩니다. 계속하시겠습니까?`)) return;
+            }
+            
+            DataManager.deleteIngredient(id);
+            toast('삭제 완료');
+            loadIngredients();
+            loadRecipes();
+        }
+
+        // ==================== 레시피 관리 ====================
+        function loadRecipes() {
+            const shopTypes = DataManager.getShopTypes();
+            
+            let html = '';
+            let totalCount = 0;
+            shopTypes.forEach(shop => {
+                const recipes = DataManager.getRecipes(shop.id);
+                totalCount += recipes.length;
+                
+                if (recipes.length > 0) {
+                    html += `
+                        <div class="category-section" style="margin-bottom:15px;">
+                            <div class="category-title" style="cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;" 
+                                 onclick="toggleRecipeSection('sec_${shop.id}', this)">
+                                <span>${shop.emoji} ${shop.name} (${recipes.length}개)</span>
+                                <span class="toggle-arrow" style="font-size:18px;transition:transform 0.2s;">▶</span>
+                            </div>
+                            <div id="sec_${shop.id}" style="display:none;">
+                                <div class="grid">
+                    `;
+                    
+                    recipes.forEach(recipe => {
+                        const cost = DataManager.calculateRecipeCost(recipe.id);
+                        const fairPrice = Math.round(cost * GameSettings.getRecipePriceMultiplier());
+                        
+                        const ingText = recipe.ingredients.map(ing => {
+                            const ingredient = DataManager.getIngredient(ing.ingredientId);
+                            return ingredient ? `${ingredient.emoji}×${ing.amount}` : '';
+                        }).join(' ');
+                        
+                        html += `
+                            <div class="item">
+                                <div class="item-header">
+                                    <div class="item-emoji">${recipe.emoji}</div>
+                                    <div class="item-info">
+                                        <div class="item-name">${recipe.name}</div>
+                                        <div class="item-desc">${ingText}</div>
+                                        <div class="item-desc">제작비: ${cost}G | 적정가: ${fairPrice}G</div>
+                                    </div>
+                                </div>
+                                <div class="item-actions">
+                                    <button class="btn btn-small" onclick="editRecipe(${recipe.id})">수정</button>
+                                    <button class="btn btn-small btn-danger" onclick="deleteRecipe(${recipe.id})">삭제</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            html = `<p style="margin-bottom:15px;color:#666;">총 ${totalCount}개 레시피 | 업종을 클릭하면 펼쳐집니다</p>` + html;
+            
+            document.getElementById('recipesList').innerHTML = html || '<p style="text-align:center;padding:40px;color:#999;">등록된 레시피가 없습니다.</p>';
+        }
+        
+        function toggleRecipeSection(id, header) {
+            const el = document.getElementById(id);
+            const arrow = header.querySelector('.toggle-arrow');
+            if (el.style.display === 'none') {
+                el.style.display = 'block';
+                arrow.style.transform = 'rotate(90deg)';
+            } else {
+                el.style.display = 'none';
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function openAddRecipeModal() {
+            const shopTypes = DataManager.getShopTypes();
+            const ingredients = DataManager.getIngredients();
+            
+            let shopOptions = '';
+            shopTypes.forEach(shop => {
+                shopOptions += `<option value="${shop.id}">${shop.emoji} ${shop.name}</option>`;
+            });
+            
+            const html = `
+                <div class="modal-title">📋 새 레시피 추가</div>
+                
+                <label>레시피 이름</label>
+                <input type="text" id="recipeName" placeholder="예: 타코">
+                
+                <label>이모지</label>
+                <input type="text" id="recipeEmoji" placeholder="🌮" maxlength="2">
+                
+                <label>어느 식당용?</label>
+                <select id="recipeShopType">
+                    ${shopOptions}
+                </select>
+                
+                <label>재료 선택</label>
+                <div style="background:#f8f9fa;padding:15px;border-radius:8px;margin-bottom:15px;">
+                    <select id="ingredientSelector" style="margin-bottom:10px;">
+                        <option value="">재료를 선택하세요</option>
+                        ${ingredients.map(ing => 
+                            `<option value="${ing.id}">${ing.emoji} ${ing.name} (${ing.price}G)</option>`
+                        ).join('')}
+                    </select>
+                    <button class="btn btn-small btn-success" onclick="addIngredientToRecipe()">+ 추가</button>
+                    
+                    <div id="selectedIngredients" style="margin-top:15px;"></div>
+                </div>
+                
+                <div style="background:#e9ecef;padding:15px;border-radius:8px;margin-bottom:15px;">
+                    <div style="font-size:13px;font-weight:600;margin-bottom:10px;">💰 자동 계산</div>
+                    <div id="costCalculation">재료를 추가하세요</div>
+                </div>
+                
+                <div style="display:flex;gap:10px;">
+                    <button class="btn" onclick="saveNewRecipe()">저장</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">취소</button>
+                </div>
+            `;
+            
+            showModal(html);
+            window.selectedRecipeIngredients = [];
+        }
+
+        function addIngredientToRecipe() {
+            const selector = document.getElementById('ingredientSelector');
+            const ingId = selector.value;
+            
+            if (!ingId) {
+                toast('재료를 선택하세요');
+                return;
+            }
+            
+            const ingredient = DataManager.getIngredient(ingId);
+            
+            // 이미 추가된 재료인지 확인
+            if (window.selectedRecipeIngredients.find(i => i.ingredientId === ingId)) {
+                toast('이미 추가된 재료입니다');
+                return;
+            }
+            
+            window.selectedRecipeIngredients.push({
+                ingredientId: ingId,
+                amount: 1
+            });
+            
+            renderSelectedIngredients();
+            updateRecipeCostCalculation();
+        }
+
+        function renderSelectedIngredients() {
+            const container = document.getElementById('selectedIngredients');
+            
+            if (window.selectedRecipeIngredients.length === 0) {
+                container.innerHTML = '<p style="color:#999;font-size:13px;">선택된 재료 없음</p>';
+                return;
+            }
+            
+            let html = '';
+            window.selectedRecipeIngredients.forEach((item, idx) => {
+                const ing = DataManager.getIngredient(item.ingredientId);
+                if (ing) {
+                    html += `
+                        <div style="display:flex;align-items:center;gap:10px;background:white;padding:10px;border-radius:8px;margin-bottom:8px;">
+                            <div style="font-size:24px;">${ing.emoji}</div>
+                            <div style="flex:1;">
+                                <div style="font-weight:600;">${ing.name}</div>
+                                <div style="font-size:12px;color:#666;">${ing.price}G</div>
+                            </div>
+                            <input type="number" value="${item.amount}" min="1" 
+                                   style="width:60px;padding:5px;margin:0;" 
+                                   onchange="updateIngredientAmount(${idx}, this.value)">
+                            <button class="btn btn-small btn-danger" onclick="removeIngredientFromRecipe(${idx})">X</button>
+                        </div>
+                    `;
+                }
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function updateIngredientAmount(idx, amount) {
+            window.selectedRecipeIngredients[idx].amount = parseInt(amount) || 1;
+            updateRecipeCostCalculation();
+        }
+
+        function removeIngredientFromRecipe(idx) {
+            window.selectedRecipeIngredients.splice(idx, 1);
+            renderSelectedIngredients();
+            updateRecipeCostCalculation();
+        }
+
+        function updateRecipeCostCalculation() {
+            let totalCost = 0;
+            let html = '<div style="font-size:12px;">';
+            
+            window.selectedRecipeIngredients.forEach(item => {
+                const ing = DataManager.getIngredient(item.ingredientId);
+                if (ing) {
+                    const cost = ing.price * item.amount;
+                    totalCost += cost;
+                    html += `<div>${ing.emoji} ${ing.name}: ${ing.price}G × ${item.amount} = ${cost}G</div>`;
+                }
+            });
+            
+            const multiplier = GameSettings.getRecipePriceMultiplier();
+            const fairPrice = totalCost * multiplier;
+            
+            html += `<div style="border-top:1px solid #ddd;margin-top:8px;padding-top:8px;">`;
+            html += `<div style="font-weight:600;">합계: ${totalCost}G</div>`;
+            html += `<div style="font-weight:600;color:#667eea;">적정가: ${totalCost}G × ${multiplier}배 = ${fairPrice}G</div>`;
+            html += `</div></div>`;
+            
+            document.getElementById('costCalculation').innerHTML = html;
+        }
+
+        function saveNewRecipe() {
+            const name = document.getElementById('recipeName').value.trim();
+            const emoji = document.getElementById('recipeEmoji').value.trim();
+            const shopType = document.getElementById('recipeShopType').value;
+            
+            if (!name) {
+                toast('레시피 이름을 입력하세요');
+                return;
+            }
+            
+            if (!emoji) {
+                toast('이모지를 입력하세요');
+                return;
+            }
+            
+            if (window.selectedRecipeIngredients.length === 0) {
+                toast('재료를 최소 1개 이상 추가하세요');
+                return;
+            }
+            
+            DataManager.addRecipe({
+                name,
+                emoji,
+                shopType,
+                ingredients: window.selectedRecipeIngredients
+            });
+            
+            closeModal();
+            toast('레시피 추가 완료!');
+            loadRecipes();
+        }
+
+        function editRecipe(id) {
+            // 간단한 수정 기능 (이름/이모지만)
+            const recipe = DataManager.getRecipe(id);
+            
+            const html = `
+                <div class="modal-title">📋 레시피 수정</div>
+                <p style="font-size:13px;color:#666;margin-bottom:15px;">현재는 이름과 이모지만 수정 가능합니다</p>
+                
+                <label>레시피 이름</label>
+                <input type="text" id="editRecipeName" value="${recipe.name}">
+                
+                <label>이모지</label>
+                <input type="text" id="editRecipeEmoji" value="${recipe.emoji}" maxlength="2">
+                
+                <div style="display:flex;gap:10px;margin-top:20px;">
+                    <button class="btn" onclick="updateRecipe(${id})">💾 저장</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">취소</button>
+                </div>
+            `;
+            
+            showModal(html);
+        }
+
+        function updateRecipe(id) {
+            const updates = {
+                name: document.getElementById('editRecipeName').value.trim(),
+                emoji: document.getElementById('editRecipeEmoji').value.trim()
+            };
+            
+            DataManager.updateRecipe(id, updates);
+            closeModal();
+            toast('수정 완료!');
+            loadRecipes();
+        }
+
+        function deleteRecipe(id) {
+            if (!confirm('정말 이 레시피를 삭제하시겠습니까?')) return;
+            
+            DataManager.deleteRecipe(id);
+            toast('삭제 완료');
+            loadRecipes();
+        }
+
+        // ==================== 문제 관리 ====================
+        function loadQuestions() {
+            const questions = DataManager.getQuestions();
+            
+            // 카테고리별로 그룹화
+            const categories = {};
+            questions.forEach(q => {
+                const cat = q.category || 'general';
+                if (!categories[cat]) {
+                    categories[cat] = [];
+                }
+                categories[cat].push(q);
+            });
+            
+            let html = '';
+            Object.entries(categories).forEach(([catName, items]) => {
+                const catLabels = {
+                    math: '🔢 수학',
+                    science: '🔬 과학',
+                    general: '📚 상식'
+                };
+                
+                html += `
+                    <div class="category-section">
+                        <div class="category-title">${catLabels[catName] || catName} (${items.length}개)</div>
+                        <div class="grid">
+                `;
+                
+                items.forEach(q => {
+                    const diffColors = {
+                        easy: '#28a745',
+                        medium: '#ffc107',
+                        hard: '#dc3545'
+                    };
+                    
+                    html += `
+                        <div class="item">
+                            <div style="margin-bottom:10px;">
+                                <div style="font-weight:600;margin-bottom:5px;">Q: ${q.question}</div>
+                                <div style="font-size:13px;color:#666;margin-bottom:5px;">
+                                    ${q.options.map((opt, idx) => 
+                                        `<div>${idx === q.correctIndex ? '✓' : ''} ${idx+1}. ${opt}</div>`
+                                    ).join('')}
+                                </div>
+                                <div style="font-size:12px;margin-top:8px;">
+                                    <span style="color:${diffColors[q.difficulty] || '#666'};">
+                                        난이도: ${q.difficulty || 'easy'}
+                                    </span>
+                                    <span style="margin-left:10px;color:#667eea;">보상: ${q.reward || 10}G</span>
+                                </div>
+                            </div>
+                            <div class="item-actions">
+                                <button class="btn btn-small" onclick="editQuestion(${q.id})">수정</button>
+                                <button class="btn btn-small btn-danger" onclick="deleteQuestion(${q.id})">삭제</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('questionsList').innerHTML = html || '<p style="text-align:center;padding:40px;color:#999;">등록된 문제가 없습니다.</p>';
+        }
+
+        function openAddQuestionModal() {
+            const html = `
+                <div class="modal-title">💰 새 문제 추가</div>
+                
+                <label>문제</label>
+                <input type="text" id="questionText" placeholder="예: 2 + 2 = ?">
+                
+                <label>선택지 1 (정답)</label>
+                <input type="text" id="option0" placeholder="4">
+                
+                <label>선택지 2</label>
+                <input type="text" id="option1" placeholder="3">
+                
+                <label>선택지 3</label>
+                <input type="text" id="option2" placeholder="5">
+                
+                <label>선택지 4</label>
+                <input type="text" id="option3" placeholder="6">
+                
+                <label>카테고리</label>
+                <select id="questionCategory">
+                    <option value="math">🔢 수학</option>
+                    <option value="science">🔬 과학</option>
+                    <option value="general">📚 상식</option>
+                </select>
+                
+                <label>난이도</label>
+                <select id="questionDifficulty">
+                    <option value="easy">쉬움</option>
+                    <option value="medium">중간</option>
+                    <option value="hard">어려움</option>
+                </select>
+                
+                <label>보상 (G)</label>
+                <input type="number" id="questionReward" value="10" min="1">
+                
+                <div style="display:flex;gap:10px;margin-top:20px;">
+                    <button class="btn" onclick="saveNewQuestion()">저장</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">취소</button>
+                </div>
+            `;
+            
+            showModal(html);
+        }
+
+        function saveNewQuestion() {
+            const question = document.getElementById('questionText').value.trim();
+            const options = [
+                document.getElementById('option0').value.trim(),
+                document.getElementById('option1').value.trim(),
+                document.getElementById('option2').value.trim(),
+                document.getElementById('option3').value.trim()
+            ];
+            
+            if (!question) {
+                toast('문제를 입력하세요');
+                return;
+            }
+            
+            if (options.some(opt => !opt)) {
+                toast('모든 선택지를 입력하세요');
+                return;
+            }
+            
+            DataManager.addQuestion({
+                question,
+                options,
+                correctIndex: 0, // 첫 번째가 항상 정답
+                category: document.getElementById('questionCategory').value,
+                difficulty: document.getElementById('questionDifficulty').value,
+                reward: parseInt(document.getElementById('questionReward').value)
+            });
+            
+            closeModal();
+            toast('문제 추가 완료!');
+            loadQuestions();
+        }
+
+        function editQuestion(id) {
+            const q = DataManager.getQuestion(id);
+            
+            const html = `
+                <div class="modal-title">💰 문제 수정</div>
+                
+                <label>문제</label>
+                <input type="text" id="editQuestionText" value="${q.question}">
+                
+                <label>선택지 1 (정답)</label>
+                <input type="text" id="editOption0" value="${q.options[0]}">
+                
+                <label>선택지 2</label>
+                <input type="text" id="editOption1" value="${q.options[1]}">
+                
+                <label>선택지 3</label>
+                <input type="text" id="editOption2" value="${q.options[2]}">
+                
+                <label>선택지 4</label>
+                <input type="text" id="editOption3" value="${q.options[3]}">
+                
+                <label>난이도</label>
+                <select id="editQuestionDifficulty">
+                    <option value="easy" ${q.difficulty==='easy'?'selected':''}>쉬움</option>
+                    <option value="medium" ${q.difficulty==='medium'?'selected':''}>중간</option>
+                    <option value="hard" ${q.difficulty==='hard'?'selected':''}>어려움</option>
+                </select>
+                
+                <label>보상 (G)</label>
+                <input type="number" id="editQuestionReward" value="${q.reward || 10}" min="1">
+                
+                <div style="display:flex;gap:10px;margin-top:20px;">
+                    <button class="btn" onclick="updateQuestion(${id})">💾 저장</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">취소</button>
+                </div>
+            `;
+            
+            showModal(html);
+        }
+
+        function updateQuestion(id) {
+            const updates = {
+                question: document.getElementById('editQuestionText').value.trim(),
+                options: [
+                    document.getElementById('editOption0').value.trim(),
+                    document.getElementById('editOption1').value.trim(),
+                    document.getElementById('editOption2').value.trim(),
+                    document.getElementById('editOption3').value.trim()
+                ],
+                difficulty: document.getElementById('editQuestionDifficulty').value,
+                reward: parseInt(document.getElementById('editQuestionReward').value)
+            };
+            
+            DataManager.updateQuestion(id, updates);
+            closeModal();
+            toast('수정 완료!');
+            loadQuestions();
+        }
+
+        function deleteQuestion(id) {
+            if (!confirm('정말 이 문제를 삭제하시겠습니까?')) return;
+            
+            DataManager.deleteQuestion(id);
+            toast('삭제 완료');
+            loadQuestions();
+        }
+
+        // ==================== 파일 업로드 ====================
+        function openUploadModal(type) {
+            currentUploadType = type;
+            
+            const typeLabels = {
+                shops: '🏪 식당',
+                ingredients: '🧪 재료',
+                recipes: '📋 레시피',
+                questions: '💰 문제'
+            };
+            
+            const html = `
+                <div class="modal-title">${typeLabels[type]} 파일 업로드</div>
+                
+                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-icon">📁</div>
+                    <div style="font-size:16px;font-weight:600;margin-bottom:5px;">파일 선택</div>
+                    <div style="font-size:13px;color:#666;">JSON 파일을 선택하거나 드래그하세요</div>
+                </div>
+                
+                <input type="file" id="fileInput" accept=".json" style="display:none;">
+                
+                <div style="margin-top:20px;">
+                    <label>또는 JSON 텍스트 직접 붙여넣기</label>
+                    <textarea id="jsonText" placeholder='{"${type}": [...]}'  style="min-height:150px;font-family:monospace;"></textarea>
+                </div>
+                
+                <div style="display:flex;gap:10px;margin-top:20px;">
+                    <button class="btn" onclick="uploadFromText()">📝 텍스트로 업로드</button>
+                    <button class="btn btn-secondary" onclick="downloadSample('${type}')">📥 샘플 다운로드</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">취소</button>
+                </div>
+            `;
+            
+            showModal(html);
+            
+            // 파일 선택 이벤트
+            document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+        }
+
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    importData(data);
+                } catch (error) {
+                    toast('올바른 JSON 파일이 아닙니다: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function uploadFromText() {
+            const text = document.getElementById('jsonText').value.trim();
+            
+            if (!text) {
+                toast('JSON 텍스트를 입력하세요');
+                return;
+            }
+            
+            try {
+                const data = JSON.parse(text);
+                importData(data);
+            } catch (error) {
+                toast('올바른 JSON 형식이 아닙니다: ' + error.message);
+            }
+        }
+
+        function importData(data) {
+            let count = 0;
+            
+            // 식당
+            if (data.shopTypes) {
+                data.shopTypes.forEach(shop => {
+                    DataManager.addShopType(shop);
+                    count++;
+                });
+                loadShopTypes();
+            }
+            
+            // 재료
+            if (data.ingredients) {
+                data.ingredients.forEach(ing => {
+                    DataManager.addIngredient(ing);
+                    count++;
+                });
+                loadIngredients();
+            }
+            
+            // 레시피
+            if (data.recipes) {
+                data.recipes.forEach(recipe => {
+                    DataManager.addRecipe(recipe);
+                    count++;
+                });
+                loadRecipes();
+            }
+            
+            // 문제
+            if (data.questions) {
+                data.questions.forEach(q => {
+                    DataManager.addQuestion(q);
+                    count++;
+                });
+                loadQuestions();
+            }
+            
+            closeModal();
+            toast(`총 ${count}개 항목이 추가되었습니다!`);
+        }
+
+        function downloadSample(type) {
+            let data = {};
+            let filename = '';
+            
+            if (type === 'ingredients') {
+                data = {
+                    ingredients: [
+                        {name: "딸기", emoji: "🍓", price: 3, category: "fruit"},
+                        {name: "생크림", emoji: "🥛", price: 5, category: "dairy"}
+                    ]
+                };
+                filename = 'ingredients-sample.json';
+            } else if (type === 'shops') {
+                data = {
+                    shopTypes: [
+                        {name: "타코 전문점", emoji: "🌮", addCost: 500}
+                    ]
+                };
+                filename = 'shops-sample.json';
+            } else if (type === 'recipes') {
+                data = {
+                    recipes: [
+                        {
+                            name: "타코",
+                            emoji: "🌮",
+                            shopType: "taco",
+                            ingredients: [
+                                {ingredientId: "lettuce", amount: 1}
+                            ]
+                        }
+                    ]
+                };
+                filename = 'recipes-sample.json';
+            } else if (type === 'questions') {
+                data = {
+                    questions: [
+                        {
+                            question: "2 + 2 = ?",
+                            options: ["4", "3", "5", "6"],
+                            correctIndex: 0,
+                            difficulty: "easy",
+                            category: "math",
+                            reward: 10
+                        }
+                    ]
+                };
+                filename = 'questions-sample.json';
+            }
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            toast('샘플 파일 다운로드 완료!');
+        }
+
+        console.log('✅ 관리자 페이지 로드 완료!');
+    </script>
+
+    <script>
+        function _adminGetSavedUntil() {
+            try { return parseInt(sessionStorage.getItem('admin_authed_until') || '0', 10); } catch(e) { return 0; }
+        }
+        function _adminSetSavedUntil(ts) {
+            try { sessionStorage.setItem('admin_authed_until', String(ts)); } catch(e) {}
+        }
+        function lockAdminIfNeeded() {
+            const now = Date.now();
+            const until = _adminGetSavedUntil();
+            const lock = document.getElementById('adminLock');
+            if (!lock) return;
+            // 8시간 세션
+            if (!until || until < now) {
+                lock.style.display = 'flex';
+                setTimeout(() => {
+                    const input = document.getElementById('adminPasswordInput');
+                    if (input) input.focus();
+                }, 50);
+            }
+        }
+        function unlockAdmin() {
+            const input = document.getElementById('adminPasswordInput');
+            const pw = (input && input.value) ? input.value : '';
+            const expected = (typeof GameSettings !== 'undefined' && GameSettings.getAdminPassword)
+                ? String(GameSettings.getAdminPassword())
+                : '1234';
+            const ok = pw && pw === expected;
+            const err = document.getElementById('adminLockError');
+            if (!ok) {
+                if (err) err.style.display = 'block';
+                return;
+            }
+            if (err) err.style.display = 'none';
+            _adminSetSavedUntil(Date.now() + 8 * 60 * 60 * 1000);
+            const lock = document.getElementById('adminLock');
+            if (lock) lock.style.display = 'none';
+        }
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && document.getElementById('adminLock')?.style.display === 'flex') {
+                unlockAdmin();
+            }
+        });
+        window.addEventListener('load', lockAdminIfNeeded);
+    
+        // ==================== BGM 모듈 (관리자) ====================
+        function _bgmLibKey() { return 'BGM_LIBRARY_V1'; }
+
+        function _loadBgmLibrary() {
+            try { return JSON.parse(localStorage.getItem(_bgmLibKey()) || '[]'); } catch(e) { return []; }
+        }
+        function _saveBgmLibrary(list) {
+            localStorage.setItem(_bgmLibKey(), JSON.stringify(list || []));
+        }
+
+        function renderBgmModule() {
+            const s = GameSettings.get();
+            // 기본값 반영
+            document.getElementById('bgm_enabled').checked = (s.bgmEnabled !== false);
+            document.getElementById('bgm_sourceType').value = (s.bgmSourceType === 'data') ? 'data' : 'url';
+            document.getElementById('bgm_url').value = s.bgmUrl || '';
+            document.getElementById('bgm_dataKey').value = s.bgmDataKey || '';
+            document.getElementById('bgm_volume').value = (typeof s.bgmVolume === 'number') ? s.bgmVolume : 0.35;
+
+            const lib = _loadBgmLibrary();
+            const curType = document.getElementById('bgm_sourceType').value;
+            const curKey = document.getElementById('bgm_dataKey').value;
+            const curUrl = (document.getElementById('bgm_url').value || '').trim();
+
+            const wrap = document.getElementById('bgm_library');
+
+            if (!lib.length) {
+                wrap.innerHTML = '<div style="font-size:13px;color:#777;">추가된 음악이 없습니다. (URL 추가 또는 파일 추가)</div>';
+                return;
+            }
+
+            // 최신순
+            const sorted = [...lib].sort((a,b)=>(b.addedAt||0)-(a.addedAt||0));
+
+            wrap.innerHTML = sorted.map(item => {
+                const type = item.type || 'data'; // data/url
+                const isActive =
+                    (type === 'data' && curType === 'data' && item.key && item.key === curKey) ||
+                    (type === 'url'  && curType === 'url'  && item.url && item.url === curUrl);
+
+                const active = isActive ? 'border:2px solid #667eea;' : 'border:1px solid #e5e7eb;';
+                const title = (type === 'url')
+                    ? (item.name || (item.url ? item.url.split('/').pop() : 'URL BGM'))
+                    : (item.name || '오디오 파일');
+
+                const meta = (type === 'url')
+                    ? `<div style="font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.url || ''}</div>`
+                    : `<div style="font-size:12px;color:#666;">${new Date(item.addedAt).toLocaleString()}</div>`;
+
+                const btns = (type === 'url')
+                    ? `<button class="btn btn-secondary" onclick="bgmUseUrl('${item.key}')">사용</button>
+                       <button class="btn btn-danger" onclick="bgmDeleteUrl('${item.key}')">삭제</button>`
+                    : `<button class="btn btn-secondary" onclick="bgmUseFile('${item.key}')">사용</button>
+                       <button class="btn btn-danger" onclick="bgmDeleteFile('${item.key}')">삭제</button>`;
+
+                const badge = (type === 'url')
+                    ? `<span style="font-size:11px;font-weight:800;color:#4f46e5;background:#eef2ff;padding:4px 8px;border-radius:999px;">URL</span>`
+                    : `<span style="font-size:11px;font-weight:800;color:#0f766e;background:#ecfeff;padding:4px 8px;border-radius:999px;">파일</span>`;
+
+                return `
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border-radius:14px;${active}">
+                        <div style="min-width:0;flex:1;">
+                            <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+                                ${badge}
+                                <div style="font-weight:800;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${title}</div>
+                            </div>
+                            ${meta}
+                            ${type === 'url' ? `<div style="font-size:12px;color:#666;">${new Date(item.addedAt).toLocaleString()}</div>` : ``}
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+                            ${btns}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+            wrap.innerHTML = lib.map(item => {
+                const active = (item.key === curKey) ? 'border:2px solid #667eea;' : 'border:1px solid #e5e7eb;';
+                return `
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border-radius:14px;${active}">
+                        <div style="min-width:0;">
+                            <div style="font-weight:800;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name}</div>
+                            <div style="font-size:12px;color:#666;">${new Date(item.addedAt).toLocaleString()}</div>
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+                            <button class="btn btn-secondary" onclick="bgmUseFile('${item.key}')">사용</button>
+                            <button class="btn btn-danger" onclick="bgmDeleteFile('${item.key}')">삭제</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        
+        function bgmAddUrl() {
+            const url = (document.getElementById('bgm_url').value || '').trim();
+            if (!url) { alert('추가할 BGM URL을 입력하세요.'); return; }
+
+            // 간단 검증: mp3/wav/ogg 등 (필수는 아니지만 실수 방지)
+            const lower = url.toLowerCase();
+            const ok = (lower.includes('.mp3') || lower.includes('.wav') || lower.includes('.ogg') || lower.startsWith('data:audio'));
+            if (!ok) {
+                if (!confirm('이 URL은 mp3/wav/ogg 확장자가 보이지 않습니다. 그래도 추가할까요?')) return;
+            }
+
+            const raw = 'URL|' + url;
+            let hash = 0;
+            for (let i = 0; i < raw.length; i++) { hash = ((hash<<5)-hash) + raw.charCodeAt(i); hash |= 0; }
+            const key = 'BGM_URL_' + Math.abs(hash);
+
+            const lib = _loadBgmLibrary();
+            const exists = lib.find(x => x.key === key);
+            if (!exists) {
+                const name = url.split('/').pop() || 'BGM URL';
+                lib.unshift({ type: 'url', key, name, url, addedAt: Date.now() });
+                _saveBgmLibrary(lib);
+            }
+
+            // 현재 선택으로 지정
+            document.getElementById('bgm_sourceType').value = 'url';
+            document.getElementById('bgm_dataKey').value = '';
+            document.getElementById('bgm_url').value = url;
+
+            alert('라이브러리에 추가되었습니다. 저장을 눌러 적용하세요.');
+            renderBgmModule();
+        }
+
+        function bgmUseUrl(key) {
+            const lib = _loadBgmLibrary();
+            const item = lib.find(x => x.key === key);
+            if (!item || !item.url) return;
+            document.getElementById('bgm_sourceType').value = 'url';
+            document.getElementById('bgm_dataKey').value = '';
+            document.getElementById('bgm_url').value = item.url;
+            renderBgmModule();
+        }
+
+        function bgmDeleteUrl(key) {
+            if (!confirm('이 URL을 라이브러리에서 삭제할까요?')) return;
+            const lib = _loadBgmLibrary().filter(x => x.key !== key);
+            _saveBgmLibrary(lib);
+            renderBgmModule();
+        }
+
+function bgmAddFile() {
+            const input = document.getElementById('bgm_file');
+            const file = input.files && input.files[0];
+            if (!file) { alert('추가할 오디오 파일을 선택하세요.'); return; }
+
+            const reader = new FileReader();
+            reader.onload = function() {
+                const dataUrl = String(reader.result || '');
+                if (!dataUrl.startsWith('data:audio')) {
+                    alert('오디오 파일만 추가할 수 있어요.');
+                    return;
+                }
+
+                // 저장 키 생성 (파일명+길이 기준)
+                const raw = file.name + '|' + file.size + '|' + dataUrl.length;
+                let hash = 0;
+                for (let i = 0; i < raw.length; i++) { hash = ((hash<<5)-hash) + raw.charCodeAt(i); hash |= 0; }
+                const key = 'BGM_FILE_' + Math.abs(hash);
+
+                try {
+                    localStorage.setItem(key, dataUrl);
+                } catch(e) {
+                    alert('저장에 실패했습니다. 파일이 너무 크면 localStorage에 저장되지 않을 수 있어요. (짧은/작은 파일로 시도하거나 URL 방식을 사용하세요)');
+                    return;
+                }
+
+                const lib = _loadBgmLibrary();
+                const exists = lib.find(x => x.key === key);
+                if (!exists) {
+                    lib.unshift({ type: 'data', key, name: file.name, addedAt: Date.now() });
+                    _saveBgmLibrary(lib);
+                }
+
+                // 현재 선택으로 지정
+                document.getElementById('bgm_sourceType').value = 'data';
+                document.getElementById('bgm_dataKey').value = key;
+                document.getElementById('bgm_url').value = '';
+
+                alert('라이브러리에 추가되었습니다. 저장을 눌러 적용하세요.');
+                renderBgmModule();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function bgmUseFile(key) {
+            document.getElementById('bgm_sourceType').value = 'data';
+            document.getElementById('bgm_dataKey').value = key;
+            document.getElementById('bgm_url').value = '';
+            renderBgmModule();
+        }
+
+        function bgmDeleteFile(key) {
+            if (!confirm('이 파일을 라이브러리에서 삭제할까요?')) return;
+            const lib = _loadBgmLibrary().filter(x => x.key !== key);
+            _saveBgmLibrary(lib);
+            try { localStorage.removeItem(key); } catch(e) {}
+            if (document.getElementById('bgm_dataKey').value === key) {
+                document.getElementById('bgm_dataKey').value = '';
+            }
+            renderBgmModule();
+        }
+
+        function bgmPreview() {
+            const player = document.getElementById('bgm_preview_player');
+            const type = document.getElementById('bgm_sourceType').value;
+            const vol = parseFloat(document.getElementById('bgm_volume').value || '0.35');
+            let src = '';
+            if (type === 'data') {
+                const key = document.getElementById('bgm_dataKey').value;
+                src = key ? (localStorage.getItem(key) || '') : '';
+            } else {
+                src = document.getElementById('bgm_url').value.trim();
+            }
+            if (!src) { alert('미리듣기 할 소스가 없습니다. URL을 입력하거나 파일을 선택하세요.'); return; }
+
+            player.style.display = 'block';
+            player.src = src;
+            player.volume = isFinite(vol) ? Math.max(0, Math.min(1, vol)) : 0.35;
+            player.play().catch(()=>{});
+        }
+
+        function bgmStopPreview() {
+            const player = document.getElementById('bgm_preview_player');
+            player.pause();
+        }
+
+</script>
+</body>
+</html>
