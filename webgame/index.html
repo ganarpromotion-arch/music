@@ -1180,78 +1180,61 @@ toast('게임 시작!');
         }
 
 function completeProduct() {
-            try {
-                if (!currentProduct) { toast('먼저 상품을 선택하세요'); return; }
+            if (!currentProduct) { toast('먼저 상품을 선택하세요'); return; }
 
-                // ✅ 구버전 저장데이터 호환: products/stats 없으면 생성 (여기서 오류 나서 '제작완료'가 안 뜨는 케이스 방지)
-                if (!userData) { toast('유저 데이터가 없습니다'); return; }
-                if (!Array.isArray(userData.products)) userData.products = [];
-                if (!userData.stats) userData.stats = {};
-                if (typeof userData.stats.made !== 'number') userData.stats.made = 0;
+            // 안전: 구버전 재료키(ing_) 정리/병합 (자동 저장 X)
+            const _normalized = normalizeInventoryLegacyKeys();
 
-                // 안전: 구버전 재료키(ing_) 정리/병합 (자동 저장 X)
-                normalizeInventoryLegacyKeys();
-
-                // 재료 확인 (부족 항목을 정확히 알려주기)
-                for (let ing of currentProduct.ingredients) {
-                    const ingredientId = ing.ingredientId || ing.id;
-                    const need = _num(ing.amount);
-                    const have = getInvQty(ingredientId);
-                    if (have < need) {
-                        const meta = DataManager.getIngredient(ingredientId) || { name: ingredientId };
-                        toast(`재료가 부족합니다! (${meta.name} ${have}/${need})`);
-                        return;
-                    }
+            // 재료 확인 (부족 항목을 정확히 알려주기)
+            for (let ing of currentProduct.ingredients) {
+                const ingredientId = ing.ingredientId || ing.id;
+                const need = _num(ing.amount);
+                const have = getInvQty(ingredientId);
+                if (have < need) {
+                    const meta = DataManager.getIngredient(ingredientId) || { name: ingredientId };
+                    toast(`재료가 부족합니다! (${meta.name} ${have}/${need})`);
+                    return;
                 }
-
-                // 재료 차감
-                currentProduct.ingredients.forEach(ing => {
-                    const ingredientId = ing.ingredientId || ing.id;
-                    decInvQty(ingredientId, ing.amount);
-                });
-
-                // 제작 패널 재렌더(버튼 상태 포함) — 실패해도 제작은 계속되게
-                try { selectProduct(currentProduct.id); } catch (e) { console.log('selectProduct 오류(무시):', e); }
-
-                // 적정가격 계산 (설정에서 배율 가져오기)
-                let fairPrice = 0;
-                try { fairPrice = DataManager.calculateFairPrice(currentProduct.id); } catch (e) { fairPrice = 0; }
-                if (!fairPrice || fairPrice < 0) fairPrice = 0;
-
-                // 상품 추가
-                userData.products.push({
-                    id: currentProduct.id,
-                    name: currentProduct.name,
-                    emoji: currentProduct.emoji,
-                    price: fairPrice,
-                    createdAt: Date.now()
-                });
-
-                userData.stats.made++;
-                DeviceAuth.saveUser(currentUserKey, userData);
-
-                toast('제작 완료!');
-                currentProduct = null;
-                const wa = document.getElementById('workArea');
-                if (wa) wa.style.display = 'none';
-
-                // 먼저 렌더해서 판매목록이 즉시 갱신되게 하고,
-                // 그 다음 tick/frame에서 내매장(판매중) 탭 이동을 확정한다.
-                try { renderAll(); } catch (e) { console.log('renderAll 오류(무시):', e); }
-
-                const goMyShop = () => {
-                    try { switchTab(2); } catch (e) {}
-                    try { window.scrollTo(0, 0); } catch (e) {}
-                };
-                goMyShop();
-                setTimeout(goMyShop, 0);
-                setTimeout(goMyShop, 50);
-                try { requestAnimationFrame(goMyShop); } catch (e) {}
-            } catch (e) {
-                console.error('completeProduct 치명 오류:', e);
-                toast('제작 중 오류가 발생했어요 (콘솔 확인)');
-                try { renderAll(); } catch (e2) {}
             }
+
+            // 재료 차감
+            currentProduct.ingredients.forEach(ing => {
+                const ingredientId = ing.ingredientId || ing.id;
+                decInvQty(ingredientId, ing.amount);
+            });
+
+            // 저장 & UI 갱신
+            // 제작 패널 재렌더(버튼 상태 포함)
+            selectProduct(currentProduct.id);
+
+            // 적정가격 계산 (설정에서 배율 가져오기)
+            const fairPrice = DataManager.calculateFairPrice(currentProduct.id);
+            
+            // 상품 추가
+            userData.products.push({
+                id: currentProduct.id,
+                name: currentProduct.name,
+                emoji: currentProduct.emoji,
+                price: fairPrice,
+                createdAt: Date.now()
+            });
+            
+            userData.stats.made++;
+            DeviceAuth.saveUser(currentUserKey, userData);
+            toast('제작 완료!');
+            currentProduct = null;
+            document.getElementById('workArea').style.display = 'none';
+            // 먼저 렌더해서 판매목록이 즉시 갱신되게 하고,
+            // 그 다음 tick/frame에서 내매장(판매중) 탭 이동을 확정한다.
+            renderAll();
+            const goMyShop = () => {
+                try { switchTab(2); } catch (e) {}
+                try { window.scrollTo(0, 0); } catch (e) {}
+            };
+            goMyShop();
+            setTimeout(goMyShop, 0);
+            setTimeout(goMyShop, 50);
+            try { requestAnimationFrame(goMyShop); } catch (e) {}
         }
 
         // ==================== 마트 ====================
@@ -1377,62 +1360,103 @@ function completeProduct() {
 
         // ==================== 문제 ====================
         function nextQuestion() {
-  try {
+            try {
+                const age = Number(userData?.age || 0);
 
-    let q = null;
+                // --- 사용된 문제(중복 방지) ---
+                const groupKey = (age >= 7 && age <= 9) ? '7_9' : String(age);
+                const USED_KEY = 'usedQuestions_' + groupKey;
+                let used = [];
+                try { used = JSON.parse(localStorage.getItem(USED_KEY) || '[]'); } catch(e) { used = []; }
+                const usedSet = new Set(used);
 
-    // ⭐ 1순위 : 업로드/클라우드 문제
-    if (typeof DataManager !== "undefined" && DataManager.getQuestions) {
-      const list = DataManager.getQuestions();
-      if (list && list.length > 0) {
-        q = list[Math.floor(Math.random() * list.length)];
-      }
-    }
+                let q = null;
 
-    // ⭐ 2순위 : 기존 기본 문제
-    if (!q && typeof QuestionSystem !== "undefined" && QuestionSystem.getRandomQuestion) {
-      q = QuestionSystem.getRandomQuestion(userData.age);
-    }
+                // 1) DataManager(관리자 업로드/클라우드 동기화된 문제) 우선 사용
+                if (typeof DataManager !== 'undefined' && DataManager.getQuestions) {
+                    const all = DataManager.getQuestions() || [];
+                    // 7~9세 전용: ageMin/ageMax 또는 ageGroup(7_9) 또는 (young/child 일부) 모두 허용
+                    const pool = all.filter(x => {
+                        if (!x) return false;
+                        // 나이 범위 필드가 있으면 우선 적용
+                        if (typeof x.ageMin === 'number' && typeof x.ageMax === 'number') {
+                            return age >= x.ageMin && age <= x.ageMax;
+                        }
+                        // ageGroup이 있으면 처리
+                        if (typeof x.ageGroup === 'string') {
+                            if (x.ageGroup === '7_9') return (age >= 7 && age <= 9);
+                            if (x.ageGroup === 'young') return (age >= 5 && age <= 7);
+                            if (x.ageGroup === 'child') return (age >= 8 && age <= 10);
+                        }
+                        // 별도 필드 없으면 모두 허용(기존 데이터)
+                        return true;
+                    });
 
-    // 그래도 없으면 종료
-    if (!q) {
-      document.getElementById("quizQuestion").innerText = "문제가 없습니다";
-      document.getElementById("quizOptions").innerHTML = "";
-      return;
-    }
+                    // 아직 안 나온 문제 우선
+                    let remain = pool.filter(x => !usedSet.has(x.id));
+                    if (remain.length === 0 && pool.length > 0) {
+                        // 다 풀었으면 리셋
+                        localStorage.setItem(USED_KEY, '[]');
+                        usedSet.clear();
+                        remain = pool.slice();
+                    }
 
-    // 형식 맞추기
-    currentQuestion = {
-      question: q.question,
-      options: q.options,
-      correctIndex: q.correctIndex
-    };
+                    if (remain.length > 0) {
+                        q = remain[Math.floor(Math.random() * remain.length)];
+                        // 사용 처리
+                        usedSet.add(q.id);
+                        localStorage.setItem(USED_KEY, JSON.stringify(Array.from(usedSet)));
+                    }
+                }
 
-    // 문제 표시
-    document.getElementById("quizQuestion").innerText = currentQuestion.question;
+                // 2) 기존 QuestionSystem(있으면) 백업으로 사용
+                if (!q && typeof QuestionSystem !== 'undefined' && QuestionSystem.getRandomQuestion) {
+                    q = QuestionSystem.getRandomQuestion(age);
+                }
 
-    let html = "";
-    currentQuestion.options.forEach((op, i) => {
-      html += `
-        <div class="quiz-option"
-             onclick="checkAnswer(${i})"
-             style="padding:15px;background:#f8f9fa;border:2px solid #ddd;border-radius:10px;cursor:pointer;text-align:center;">
-          ${op}
-        </div>
-      `;
-    });
+                // 3) 그래도 없으면 기본 문제
+                if (!q) {
+                    const defaultQuestions = [
+                        { question: '2 + 2 = ?', options: ['4', '3', '5', '6'], correctIndex: 0 },
+                        { question: '5 × 3 = ?', options: ['15', '10', '20', '12'], correctIndex: 0 }
+                    ];
+                    q = defaultQuestions[Math.floor(Math.random() * defaultQuestions.length)];
+                }
 
-    document.getElementById("quizOptions").innerHTML = html;
+                // DataManager/QuestionSystem 형식 통일
+                currentQuestion = {
+                    question: q.question,
+                    options: q.options,
+                    correctIndex: Number(q.correctIndex)
+                };
 
-  } catch (e) {
-    console.log(e);
-  }
-}
+                document.getElementById('quizQuestion').textContent = currentQuestion.question;
 
+                let html = '';
+                currentQuestion.options.forEach((option, idx) => {
+                    html += `
+                        <div class="quiz-option" 
+                             style="padding:15px;background:#f8f9fa;border:2px solid #ddd;border-radius:10px;cursor:pointer;text-align:center;transition:all 0.3s;" 
+                             onmouseover="this.style.background='#e9ecef';this.style.borderColor='#667eea';" 
+                             onmouseout="this.style.background='#f8f9fa';this.style.borderColor='#ddd';"
+                             onclick="checkAnswer(${idx})">
+                            ${option}
+                        </div>
+                    `;
+                });
+                document.getElementById('quizOptions').innerHTML = html;
+            } catch (e) {
+                console.log('문제 로드 에러:', e);
+                document.getElementById('quizQuestion').textContent = '문제를 불러올 수 없습니다';
+                document.getElementById('quizOptions').innerHTML = '<p style="text-align:center;color:#999;">문제 시스템 오류</p>';
+            }
+        }
 
         function checkAnswer(idx) {
-            if (idx === currentQuestion.correctIndex) {
-                const reward = GameSettings.getQuestionReward('easy'); // 난이도별 보상
+            const correct = Number(currentQuestion.correctIndex);
+            if (idx === correct) {
+                const diff = (currentQuestion && currentQuestion.difficulty) ? currentQuestion.difficulty : 'easy';
+                const reward = GameSettings.getQuestionReward ? GameSettings.getQuestionReward(diff) : 10;
                 userData.gold += reward;
                 DeviceAuth.saveUser(currentUserKey, userData);
                 toast(`정답! +${reward}G`);
