@@ -2,6 +2,14 @@
 const DataManager = (function() {
     'use strict';
 
+    // ==================== 저장소 키/동기화 ====================
+    const STORAGE_KEY = 'gameData';
+    let _mem = null;                  // 메모리 캐시
+    let _syncReady = false;           // Firebase gameData 로드 완료 여부
+    let _syncCallbacks = [];
+    let _fbRef = null;
+    let _suppressRemoteWrite = false; // 원격에서 내려온 값 반영 중 재저장 루프 방지
+
     // ==================== 기본 데이터 (shop-data-30.js 우선 사용) ====================
     function getDefaultData() {
         // shop-data-30.js가 로드되어 있으면 그쪽 데이터 사용
@@ -42,47 +50,106 @@ const DataManager = (function() {
 
     // ==================== 초기화 ====================
     function init() {
-        // ⚠️ 중요: 기존 gameData가 있으면 덮어쓰지 않음 (추가/수정한 데이터 보존)
-        // - 최초 1회만 기본 데이터로 시드
-        // - 이미 저장된 데이터가 있는 경우: 누락된 필드만 기본값으로 보강
-        const stored = localStorage.getItem('gameData');
-        const dd = getDefaultData();
-
-        if (!stored) {
-            saveAll(dd);
-            console.log('✅ 기본 데이터 최초 시드 완료');
-            return;
+        // ✅ 기존 gameData가 있으면 절대 덮어쓰지 않음 (관리자 업로드/수정 보호)
+        // 없으면 기본값으로 1회만 초기화
+        const existing = _readLocal();
+        if (!existing) {
+            const dd = getDefaultData();
+            _writeLocal(dd);
+            _mem = dd;
+            console.log('✅ 기본 데이터 1회 초기화 완료');
+        } else {
+            _mem = existing;
+            console.log('✅ 기존 gameData 로드 완료');
         }
 
+        // Firebase(Realtime DB) gameData 동기화
+        _initFirebaseSync();
+    }
+
+    function _readLocal() {
         try {
-            const cur = JSON.parse(stored);
-            const merged = {
-                shopTypes: Array.isArray(cur.shopTypes) ? cur.shopTypes : dd.shopTypes,
-                ingredients: Array.isArray(cur.ingredients) ? cur.ingredients : dd.ingredients,
-                recipes: Array.isArray(cur.recipes) ? cur.recipes : dd.recipes,
-                questions: Array.isArray(cur.questions) ? cur.questions : dd.questions
-            };
-            // 혹시 다른 확장 필드가 들어있다면 유지
-            for (const k in cur) {
-                if (!(k in merged)) merged[k] = cur[k];
-            }
-            saveAll(merged);
-            console.log('✅ 기존 데이터 유지 + 누락 필드 보강 완료');
+            const raw = localStorage.getItem(STORAGE_KEY);
+            return raw ? JSON.parse(raw) : null;
         } catch (e) {
-            // 저장 데이터가 깨진 경우에만 기본값으로 복구
-            saveAll(dd);
-            console.warn('⚠️ gameData 파싱 실패. 기본 데이터로 복구:', e);
+            return null;
         }
+    }
+
+    function _writeLocal(data) {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch (e) {}
+    }
+
+    function _deepCopy(x) {
+        return JSON.parse(JSON.stringify(x));
+    }
+
+    function _initFirebaseSync() {
+        try {
+            if (typeof firebase === 'undefined' || !firebase.database) {
+                _markSyncReady();
+                return;
+            }
+            const db = firebase.database();
+            _fbRef = db.ref('gameData');
+
+            _fbRef.on('value', (snap) => {
+                const remote = snap.val();
+                if (remote && typeof remote === 'object') {
+                    _suppressRemoteWrite = true;
+                    _mem = remote;
+                    _writeLocal(remote);
+                    _suppressRemoteWrite = false;
+
+                    try { if (window.renderAll) window.renderAll(); } catch (e) {}
+                }
+                _markSyncReady();
+            }, (err) => {
+                console.error('❌ Firebase gameData 읽기 실패:', err);
+                _markSyncReady();
+            });
+        } catch (e) {
+            console.error('❌ Firebase gameData 동기화 초기화 실패:', e);
+            _markSyncReady();
+        }
+    }
+
+    function _markSyncReady() {
+        if (_syncReady) return;
+        _syncReady = true;
+        _syncCallbacks.forEach(cb => { try { cb(); } catch(e) {} });
+        _syncCallbacks = [];
+    }
+
+    function onSyncReady(cb) {
+        if (_syncReady) cb();
+        else _syncCallbacks.push(cb);
     }
 
     // ==================== 전체 데이터 ====================
     function getAll() {
-        const data = localStorage.getItem('gameData');
-        return data ? JSON.parse(data) : getDefaultData();
+        if (_mem) return _deepCopy(_mem);
+        const local = _readLocal();
+        if (local) {
+            _mem = local;
+            return _deepCopy(local);
+        }
+        const dd = getDefaultData();
+        _mem = dd;
+        return _deepCopy(dd);
     }
 
     function saveAll(data) {
-        localStorage.setItem('gameData', JSON.stringify(data));
+        _mem = _deepCopy(data);
+        _writeLocal(_mem);
+
+        try {
+            if (_fbRef && !_suppressRemoteWrite) {
+                _fbRef.set(_mem).catch(e => console.error('Firebase gameData 저장 에러:', e));
+            }
+        } catch (e) {}
     }
 
     // ==================== 식당 종류 ====================
@@ -255,7 +322,7 @@ const DataManager = (function() {
 
     function addQuestion(question) {
         const data = getAll();
-        question.id = Date.now();
+        question.id = question.id || Date.now();
         question.createdAt = Date.now();
         data.questions.push(question);
         saveAll(data);
@@ -302,6 +369,7 @@ const DataManager = (function() {
     // ==================== Public API ====================
     return {
         init,
+        onSyncReady,
         getAll,
         saveAll,
         
